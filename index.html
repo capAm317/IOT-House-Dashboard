@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>House Admin - IOT House Status</title>
+
+    <!-- Bootstrap Core CSS -->
+    <script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/sb-admin.css" rel="stylesheet">
+
+    <!-- Morris Charts CSS -->
+    <link href="css/plugins/morris.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+
+            <!-- Brand and toggle get grouped for better mobile display -->
+            
+            <!-- Top Menu Items -->
+            
+            <!-- Sidebar Menu Items - These collapse to the responsive navigation menu on small screens -->
+            
+            <!-- /.navbar-collapse -->
+
+        <div id="page-wrapper">
+
+            <div class="container-fluid">
+
+                <!-- Page Heading -->
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">
+                            Dashboard <small>House Status Overview</small>
+                        </h1>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <div class="row">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <i class="fa fa-map-marker fa-5x"></i>
+                                    </div>
+                                    <div class="col-xs-9 text-right">
+                                        <div class="huge" id="vtemp">0</div>
+                                        <div>Current Temperature</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="panel panel-green">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <i class="fa fa-sun-o fa-5x"></i>
+                                    </div>
+                                    <div class="col-xs-9 text-right">
+                                        <div class="huge" id="vhum">0</div>
+                                        <div>Current Humidity</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="panel panel-yellow">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <i class="fa fa-eye fa-5x"></i>
+                                    </div>
+                                    <div class="col-xs-9 text-right">
+                                        <div class="huge" id="vPIR">0</div>
+                                        <div>PIR Sensor Data</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="panel panel-red">
+                            <div class="panel-heading">
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <i class="fa fa-heart fa-5x"></i>
+                                    </div>
+                                    <div class="col-xs-9 text-right">
+                                        <div class="huge" id="vheartbeat">Inactive</div>
+                                        <div>Heartbeat of Node</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3 class="panel-title"><i class="fa fa-bar-chart-o fa-fw"></i> Temperature and Humidity Chart</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div id="morris-area-chart"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.row -->
+
+                <!-- /.row -->
+
+            </div>
+            <!-- /.container-fluid -->
+
+        </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/moment.js"></script>
+
+    <!-- Morris Charts JavaScript -->
+    <script src="js/plugins/morris/raphael.min.js"></script>
+    <script src="js/plugins/morris/morris.min.js"></script>
+
+    <script type="text/javascript">
+
+        function tempHum(temp, hum, period){
+            this.temperature = temp;
+            this.humidity = hum;
+            this.period = period;
+
+        }
+        var tp = 0;
+        var hm = 0;
+        var prevT = 0;
+        var prevH = 0;
+        var temporary;
+        var totalSum = 0;
+        var totalHum = 0;
+        var aveT = 0;
+        var aveH = 0;
+        var minute = moment().format('mm');
+        var TMA = Array();
+        var morry = Morris.Line({
+                    element: 'morris-area-chart',
+                    data: TMA,
+                    xkey: 'period',
+                    ymax: 100,
+                    ykeys: ['temperature', 'humidity'],
+                    labels: ['temperature', 'humidity'],
+                    parseTime:false
+                });
+
+        var socket = io.connect('localhost:5000');
+          socket.on('connect', function () {
+            socket.on('mqtt', function (msg) {
+                
+            if(msg.topic === '/G405/sensor/heartbeat') {
+                console.log("Heartbeat: " + msg.payload);
+                if(msg.payload == 1){
+                    $("#vheartbeat").text("Active");
+                }
+                else{
+                    $("#vheartbeat").text("Inactive");
+                }
+                
+              }
+              console.log(msg.topic+' '+msg.payload);
+              if(msg.topic === '/G405/sensor/temp' && $("#vheartbeat").text() == "Active") {
+                console.log("Temp: " + msg.payload);
+                tp = msg.payload;
+                $("#vtemp").text(msg.payload);
+              }
+              else if(msg.topic === '/G405/sensor/humidity' && $("#vheartbeat").text() == "Active") {
+                console.log("Humidity: " + msg.payload);
+                hm = msg.payload;
+                $("#vhum").text(msg.payload);
+              }
+              else if(msg.topic === '/G405/sensor/PIR' && $("#vheartbeat").text() == "Active") {
+                console.log("PIR: " + msg.payload);
+                $("#vPIR").text(msg.payload);
+              }
+              
+                
+                
+                var tempTime = moment().format('mm');
+                var Sec = moment().format('ss');
+
+                if(prevT == 0 && prevH == 0){
+                    prevT = tp;
+                    prevH = hm;
+                    temporary = new tempHum(tp, hm, moment().format('MMMM Do YYYY, h:mm:ss a'));
+                    TMA.push(temporary);
+                    morry.setData(TMA);
+                }
+                else if(prevT != tp || prevH != hm){
+                    prevT = tp;
+                    prevH = hm;
+                    temporary = new tempHum(tp, hm, moment().format('MMMM Do YYYY, h:mm:ss a'));
+                    TMA.push(temporary);
+                    morry.setData(TMA);
+                }
+
+                if(minute == tempTime){
+                    totalSum += parseInt(tp);
+                    totalHum += parseInt(hm);
+                }
+                else if(minute != tempTime){
+                    
+                    
+                    aveT = totalSum/(60-Sec);
+                    aveH = totalHum/(60-Sec);
+                    // reset
+                    if(aveT >= 20 && aveT <= 24){
+                        alert('The temperature is optimal for system reliability');
+                    }
+                    else if(aveT < 20){
+                        alert('Please increase your AC temperature.');
+                    }   
+                    else if(aveT > 24){
+                        alert('The room is too hot.');
+                    }
+
+                    minute = tempTime;
+                    totalHum = 0;
+                    totalSum = 0;
+
+                }
+                
+                
+                
+            });
+            //socket.emit('subscribe',{topic:'/G405/sensor/temp'});
+          });
+
+          
+          
+
+
+    </script>
+
+</body>
+
+</html>
